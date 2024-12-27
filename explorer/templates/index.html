@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RootChain Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-2xl font-bold text-gray-800">RootChain Explorer</span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="relative">
+                        <input type="text" id="search" placeholder="Search by block, transaction, or address" 
+                               class="w-96 px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="search()" class="absolute right-2 top-2 text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Network Stats -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Network Statistics</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-gray-600">Total Blocks</p>
+                    <p id="totalBlocks" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-gray-600">Total Transactions</p>
+                    <p id="totalTransactions" class="text-2xl font-bold">0</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-gray-600">ROOT Price</p>
+                    <p id="rootPrice" class="text-2xl font-bold">$90.00</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-gray-600">Market Cap</p>
+                    <p id="marketCap" class="text-2xl font-bold">$90,000,000</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Blocks -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Latest Blocks</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Block</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transactions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Miner</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                        </tr>
+                    </thead>
+                    <tbody id="latestBlocks" class="bg-white divide-y divide-gray-200">
+                        <!-- Blocks will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Latest Transactions -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Latest Transactions</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hash</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="latestTransactions" class="bg-white divide-y divide-gray-200">
+                        <!-- Transactions will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function formatAddress(address) {
+            return `${address.slice(0, 6)}...${address.slice(-4)}`;
+        }
+
+        function formatAge(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            const minutes = Math.floor(diff / 60000);
+            
+            if (minutes < 1) return 'just now';
+            if (minutes < 60) return `${minutes} mins ago`;
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} hrs ago`;
+            
+            const days = Math.floor(hours / 24);
+            return `${days} days ago`;
+        }
+
+        async function fetchLatestBlocks() {
+            try {
+                const response = await fetch('/api/blocks/latest');
+                const blocks = await response.json();
+                
+                const tbody = document.getElementById('latestBlocks');
+                tbody.innerHTML = blocks.map(block => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="/block/${block.hash}" class="text-blue-600 hover:text-blue-800">
+                                ${block.index}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">${formatAge(block.timestamp)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${block.transactions.length}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="/address/${block.miner}" class="text-blue-600 hover:text-blue-800">
+                                ${formatAddress(block.miner)}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">${block.size} bytes</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error fetching latest blocks:', error);
+            }
+        }
+
+        async function fetchLatestTransactions() {
+            try {
+                const response = await fetch('/api/transactions/latest');
+                const transactions = await response.json();
+                
+                const tbody = document.getElementById('latestTransactions');
+                tbody.innerHTML = transactions.map(tx => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="/transaction/${tx.hash}" class="text-blue-600 hover:text-blue-800">
+                                ${formatAddress(tx.hash)}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">${formatAge(tx.timestamp)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="/address/${tx.from}" class="text-blue-600 hover:text-blue-800">
+                                ${formatAddress(tx.from)}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="/address/${tx.to}" class="text-blue-600 hover:text-blue-800">
+                                ${formatAddress(tx.to)}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">${tx.amount} ROOT</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error fetching latest transactions:', error);
+            }
+        }
+
+        async function fetchNetworkStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('totalBlocks').textContent = stats.total_blocks;
+                document.getElementById('totalTransactions').textContent = stats.total_transactions;
+                document.getElementById('rootPrice').textContent = `$${stats.root_price.toFixed(2)}`;
+                document.getElementById('marketCap').textContent = `$${stats.market_cap.toLocaleString()}`;
+            } catch (error) {
+                console.error('Error fetching network stats:', error);
+            }
+        }
+
+        function search() {
+            const query = document.getElementById('search').value.trim();
+            if (!query) return;
+            
+            if (query.startsWith('rtc')) {
+                window.location.href = `/address/${query}`;
+            } else if (query.length === 64) {
+                window.location.href = `/transaction/${query}`;
+            } else if (!isNaN(query)) {
+                window.location.href = `/block/${query}`;
+            }
+        }
+
+        // Initial load
+        fetchNetworkStats();
+        fetchLatestBlocks();
+        fetchLatestTransactions();
+
+        // Refresh data every 30 seconds
+        setInterval(() => {
+            fetchNetworkStats();
+            fetchLatestBlocks();
+            fetchLatestTransactions();
+        }, 30000);
+    </script>
+</body>
+</html> 

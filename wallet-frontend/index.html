@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RootChain Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <nav class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center">
+                            <span class="text-2xl font-bold text-gray-800">RootChain Wallet</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <span id="walletAddress" class="text-gray-600"></span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Wallet Creation Section -->
+            <div id="createWallet" class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Create New Wallet</h2>
+                <button onclick="createWallet()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Create Wallet
+                </button>
+            </div>
+
+            <!-- Wallet Recovery Section -->
+            <div id="recoverWallet" class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Recover Wallet</h2>
+                <textarea id="mnemonicInput" class="w-full p-2 border rounded mb-4" placeholder="Enter your 24-word mnemonic phrase"></textarea>
+                <button onclick="recoverWallet()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Recover Wallet
+                </button>
+            </div>
+
+            <!-- Wallet Details Section -->
+            <div id="walletDetails" class="bg-white shadow rounded-lg p-6 mb-6 hidden">
+                <h2 class="text-xl font-semibold mb-4">Wallet Details</h2>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-gray-600">Balance:</p>
+                        <p id="balance" class="text-2xl font-bold">0 ROOT</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Address:</p>
+                        <p id="address" class="font-mono break-all"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buy ROOT Section -->
+            <div id="buyRoot" class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Buy ROOT Tokens</h2>
+                <div class="mb-4">
+                    <input type="number" id="rootAmount" class="w-full p-2 border rounded" placeholder="Amount of ROOT to buy">
+                    <p class="text-sm text-gray-600 mt-1">1 ROOT = $90 USD</p>
+                </div>
+                <button onclick="buyRoot()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                    Buy ROOT
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const stripe = Stripe('your_publishable_key'); // Replace with your Stripe publishable key
+
+        async function createWallet() {
+            try {
+                const response = await fetch('/api/wallet/create', {
+                    method: 'POST'
+                });
+                const wallet = await response.json();
+                
+                // Show mnemonic to user (in a secure way)
+                alert('Please save your mnemonic phrase: ' + wallet.mnemonic);
+                
+                updateWalletUI(wallet);
+            } catch (error) {
+                console.error('Error creating wallet:', error);
+            }
+        }
+
+        async function recoverWallet() {
+            const mnemonic = document.getElementById('mnemonicInput').value;
+            try {
+                const response = await fetch('/api/wallet/recover', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ mnemonic })
+                });
+                const wallet = await response.json();
+                updateWalletUI(wallet);
+            } catch (error) {
+                console.error('Error recovering wallet:', error);
+            }
+        }
+
+        async function buyRoot() {
+            const amount = document.getElementById('rootAmount').value;
+            try {
+                // Create payment intent
+                const response = await fetch('/api/payment/create-intent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: amount * 90 // $90 per ROOT
+                    })
+                });
+                const { clientSecret } = await response.json();
+
+                // Handle payment
+                const result = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: elements.getElement('card'),
+                        billing_details: {
+                            name: 'ROOT Token Purchase'
+                        }
+                    }
+                });
+
+                if (result.error) {
+                    console.error(result.error);
+                } else {
+                    // Payment successful
+                    alert('Successfully purchased ROOT tokens!');
+                    // Update balance
+                    fetchWalletDetails();
+                }
+            } catch (error) {
+                console.error('Error buying ROOT:', error);
+            }
+        }
+
+        function updateWalletUI(wallet) {
+            document.getElementById('walletDetails').classList.remove('hidden');
+            document.getElementById('address').textContent = wallet.address;
+            document.getElementById('balance').textContent = `${wallet.balance} ROOT`;
+            document.getElementById('walletAddress').textContent = `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`;
+        }
+
+        async function fetchWalletDetails() {
+            try {
+                const response = await fetch('/api/wallet/details');
+                const wallet = await response.json();
+                updateWalletUI(wallet);
+            } catch (error) {
+                console.error('Error fetching wallet details:', error);
+            }
+        }
+    </script>
+</body>
+</html> 

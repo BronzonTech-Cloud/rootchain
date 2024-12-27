@@ -35,7 +35,7 @@ rootchain/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/rootchain.git
+git clone https://github.com/Bronzontech-Cloud/rootchain.git
 cd rootchain
 ```
 
@@ -117,5 +117,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contact
 
-Your Name - your.email@example.com
-Project Link: https://github.com/yourusername/rootchain 
+Charles Bronzon- bronzontech@pm.me
+Project Link: https://github.com/Bronzontech-Cloud/rootchain 

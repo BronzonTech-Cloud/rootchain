@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RootChain Network Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">RootChain Network Monitor</h1>
+
+        <!-- Network Health -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div id="mainnet-health" class="bg-white p-6 rounded-lg shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Mainnet Health</h2>
+                    <span id="mainnet-status" class="px-3 py-1 rounded text-white"></span>
+                </div>
+                <div class="space-y-4">
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div id="mainnet-health-bar" class="h-4 rounded-full"></div>
+                    </div>
+                    <ul id="mainnet-issues" class="list-disc list-inside text-sm text-gray-600"></ul>
+                </div>
+            </div>
+
+            <div id="testnet-health" class="bg-white p-6 rounded-lg shadow">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Testnet Health</h2>
+                    <span id="testnet-status" class="px-3 py-1 rounded text-white"></span>
+                </div>
+                <div class="space-y-4">
+                    <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div id="testnet-health-bar" class="h-4 rounded-full"></div>
+                    </div>
+                    <ul id="testnet-issues" class="list-disc list-inside text-sm text-gray-600"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Comparison -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Network Comparison</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Block Height Difference</p>
+                    <p id="block-height-diff" class="text-2xl font-bold"></p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Transaction Volume Ratio</p>
+                    <p id="tx-volume-ratio" class="text-2xl font-bold"></p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Active Addresses Ratio</p>
+                    <p id="address-ratio" class="text-2xl font-bold"></p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Block Time Ratio</p>
+                    <p id="block-time-ratio" class="text-2xl font-bold"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Block Production</h2>
+                <canvas id="block-chart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Transaction Volume</h2>
+                <canvas id="transaction-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Detailed Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Mainnet Metrics</h2>
+                <div class="space-y-2">
+                    <p><strong>Total Blocks:</strong> <span id="mainnet-blocks"></span></p>
+                    <p><strong>Total Transactions:</strong> <span id="mainnet-transactions"></span></p>
+                    <p><strong>Active Addresses:</strong> <span id="mainnet-addresses"></span></p>
+                    <p><strong>Average Block Time:</strong> <span id="mainnet-block-time"></span> seconds</p>
+                    <p><strong>Transactions per Block:</strong> <span id="mainnet-tx-per-block"></span></p>
+                    <p><strong>Treasury Balance:</strong> <span id="mainnet-treasury"></span> ROOT</p>
+                    <p><strong>Pending Transactions:</strong> <span id="mainnet-pending"></span></p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Testnet Metrics</h2>
+                <div class="space-y-2">
+                    <p><strong>Total Blocks:</strong> <span id="testnet-blocks"></span></p>
+                    <p><strong>Total Transactions:</strong> <span id="testnet-transactions"></span></p>
+                    <p><strong>Active Addresses:</strong> <span id="testnet-addresses"></span></p>
+                    <p><strong>Average Block Time:</strong> <span id="testnet-block-time"></span> seconds</p>
+                    <p><strong>Transactions per Block:</strong> <span id="testnet-tx-per-block"></span></p>
+                    <p><strong>Treasury Balance:</strong> <span id="testnet-treasury"></span> tROOT</p>
+                    <p><strong>Pending Transactions:</strong> <span id="testnet-pending"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let blockChart, transactionChart;
+
+        function updateHealth(health) {
+            for (const network of ['mainnet', 'testnet']) {
+                const data = health[network];
+                const statusEl = document.getElementById(`${network}-status`);
+                const healthBar = document.getElementById(`${network}-health-bar`);
+                const issuesList = document.getElementById(`${network}-issues`);
+
+                // Update status badge
+                statusEl.textContent = data.status.toUpperCase();
+                statusEl.className = `px-3 py-1 rounded text-white ${
+                    data.status === 'healthy' ? 'bg-green-500' :
+                    data.status === 'warning' ? 'bg-yellow-500' :
+                    'bg-red-500'
+                }`;
+
+                // Update health bar
+                healthBar.style.width = `${data.score}%`;
+                healthBar.className = `h-4 rounded-full ${
+                    data.score >= 90 ? 'bg-green-500' :
+                    data.score >= 70 ? 'bg-yellow-500' :
+                    'bg-red-500'
+                }`;
+
+                // Update issues list
+                issuesList.innerHTML = data.issues.map(issue => 
+                    `<li>${issue}</li>`
+                ).join('');
+            }
+        }
+
+        function updateComparison(comparison) {
+            document.getElementById('block-height-diff').textContent = comparison.block_height_diff.toLocaleString();
+            document.getElementById('tx-volume-ratio').textContent = comparison.transaction_volume_ratio.toFixed(2);
+            document.getElementById('address-ratio').textContent = comparison.active_addresses_ratio.toFixed(2);
+            document.getElementById('block-time-ratio').textContent = comparison.block_time_ratio.toFixed(2);
+        }
+
+        function updateMetrics(metrics) {
+            for (const network of ['mainnet', 'testnet']) {
+                const data = metrics[network];
+                document.getElementById(`${network}-blocks`).textContent = data.blocks.toLocaleString();
+                document.getElementById(`${network}-transactions`).textContent = data.transactions.toLocaleString();
+                document.getElementById(`${network}-addresses`).textContent = data.active_addresses.toLocaleString();
+                document.getElementById(`${network}-block-time`).textContent = data.avg_block_time.toFixed(2);
+                document.getElementById(`${network}-tx-per-block`).textContent = data.avg_transactions_per_block.toFixed(2);
+                document.getElementById(`${network}-treasury`).textContent = data.treasury_balance.toLocaleString();
+                document.getElementById(`${network}-pending`).textContent = data.pending_transactions.toLocaleString();
+            }
+        }
+
+        function initCharts() {
+            const ctx1 = document.getElementById('block-chart').getContext('2d');
+            blockChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Mainnet',
+                            borderColor: 'rgb(59, 130, 246)',
+                            data: []
+                        },
+                        {
+                            label: 'Testnet',
+                            borderColor: 'rgb(168, 85, 247)',
+                            data: []
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('transaction-chart').getContext('2d');
+            transactionChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Mainnet',
+                            borderColor: 'rgb(59, 130, 246)',
+                            data: []
+                        },
+                        {
+                            label: 'Testnet',
+                            borderColor: 'rgb(168, 85, 247)',
+                            data: []
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        async function updateCharts() {
+            const [mainnetHistory, testnetHistory] = await Promise.all([
+                fetch('/api/metrics/history?network=mainnet').then(r => r.json()),
+                fetch('/api/metrics/history?network=testnet').then(r => r.json())
+            ]);
+
+            const labels = mainnetHistory.map(m => 
+                new Date(m.timestamp * 1000).toLocaleTimeString()
+            );
+
+            blockChart.data.labels = labels;
+            blockChart.data.datasets[0].data = mainnetHistory.map(m => m.blocks);
+            blockChart.data.datasets[1].data = testnetHistory.map(m => m.blocks);
+            blockChart.update();
+
+            transactionChart.data.labels = labels;
+            transactionChart.data.datasets[0].data = mainnetHistory.map(m => m.transactions);
+            transactionChart.data.datasets[1].data = testnetHistory.map(m => m.transactions);
+            transactionChart.update();
+        }
+
+        async function refreshData() {
+            try {
+                const [metrics, health] = await Promise.all([
+                    fetch('/api/metrics/current').then(r => r.json()),
+                    fetch('/api/metrics/network-health').then(r => r.json())
+                ]);
+
+                updateHealth(health);
+                updateComparison(metrics.comparison);
+                updateMetrics(metrics);
+                await updateCharts();
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            }
+        }
+
+        // Initialize charts
+        initCharts();
+
+        // Refresh data every 30 seconds
+        setInterval(refreshData, 30000);
+
+        // Initial load
+        refreshData();
+    </script>
+</body>
+</html> 

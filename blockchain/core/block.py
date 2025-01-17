@@ -9,6 +9,8 @@ class Block:
         self.timestamp = timestamp
         self.previous_hash = previous_hash
         self.nonce = nonce
+        # Get network from first transaction (genesis block sets this)
+        self.network = transactions[0].get("network", "mainnet") if transactions else "mainnet"
         self.hash = self.calculate_hash()
 
     def calculate_hash(self) -> str:
@@ -17,7 +19,8 @@ class Block:
             str(self.transactions) +
             str(self.timestamp) +
             str(self.previous_hash) +
-            str(self.nonce)
+            str(self.nonce) +
+            str(self.network)  # Include network in hash calculation
         )
         return hashlib.sha256(block_string.encode()).hexdigest()
 
@@ -34,5 +37,6 @@ class Block:
             "timestamp": self.timestamp,
             "previous_hash": self.previous_hash,
             "nonce": self.nonce,
-            "hash": self.hash
+            "hash": self.hash,
+            "network": self.network
         } 

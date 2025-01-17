@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RootChain Testnet Faucet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">RootChain Testnet Faucet</h1>
+
+        <!-- Faucet Info -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Faucet Information</h2>
+            <div class="space-y-2">
+                <p><strong>Treasury Balance:</strong> <span id="treasury-balance">Loading...</span> tROOT</p>
+                <p><strong>Maximum Request:</strong> {{ max_tokens }} tROOT</p>
+                <p><strong>Cooldown Period:</strong> {{ cooldown_hours }} hours</p>
+                <p><strong>Active Requests:</strong> <span id="active-requests">Loading...</span></p>
+            </div>
+        </div>
+
+        <!-- Request Form -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Request Test Tokens</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block mb-2">Testnet Address (starts with 'trtc')</label>
+                    <input type="text" id="address" class="w-full p-2 border rounded" placeholder="Enter your testnet address">
+                </div>
+                <div>
+                    <label class="block mb-2">Amount (max {{ max_tokens }} tROOT)</label>
+                    <input type="number" id="amount" class="w-full p-2 border rounded" placeholder="Enter amount" value="{{ max_tokens }}">
+                </div>
+                <button onclick="requestTokens()" class="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">Request Tokens</button>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div id="transaction-history" class="hidden bg-white p-6 rounded-lg shadow mt-8">
+            <h2 class="text-xl font-semibold mb-4">Last Transaction</h2>
+            <div class="space-y-2">
+                <p><strong>Status:</strong> <span id="tx-status"></span></p>
+                <p><strong>Message:</strong> <span id="tx-message"></span></p>
+                <p><strong>From:</strong> <span id="tx-from"></span></p>
+                <p><strong>To:</strong> <span id="tx-to"></span></p>
+                <p><strong>Amount:</strong> <span id="tx-amount"></span> tROOT</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function updateFaucetInfo() {
+            try {
+                const response = await fetch('/api/faucet-info');
+                const info = await response.json();
+                document.getElementById('treasury-balance').textContent = info.treasury_balance.toLocaleString();
+                document.getElementById('active-requests').textContent = info.active_requests;
+            } catch (error) {
+                console.error('Error fetching faucet info:', error);
+            }
+        }
+
+        async function requestTokens() {
+            const address = document.getElementById('address').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (!address || !amount) {
+                alert('Please enter both address and amount');
+                return;
+            }
+
+            if (!address.startsWith('trtc')) {
+                alert('Invalid address format. Address must start with "trtc"');
+                return;
+            }
+
+            if (amount <= 0 || amount > {{ max_tokens }}) {
+                alert(`Amount must be between 0 and {{ max_tokens }} tROOT`);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/request-tokens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address, amount })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Show transaction details
+                    document.getElementById('transaction-history').classList.remove('hidden');
+                    document.getElementById('tx-status').textContent = 'Success';
+                    document.getElementById('tx-message').textContent = result.message;
+                    document.getElementById('tx-from').textContent = result.transaction.from;
+                    document.getElementById('tx-to').textContent = result.transaction.to;
+                    document.getElementById('tx-amount').textContent = result.transaction.amount;
+
+                    // Update faucet info
+                    updateFaucetInfo();
+                } else {
+                    throw new Error(result.detail);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Update faucet info every 30 seconds
+        setInterval(updateFaucetInfo, 30000);
+
+        // Initial load
+        updateFaucetInfo();
+    </script>
+</body>
+</html> 

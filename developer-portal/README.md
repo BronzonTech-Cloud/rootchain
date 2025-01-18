@@ -52,20 +52,18 @@ A modern, full-featured developer portal for the RootChain blockchain platform. 
 
 ### Installation
 
-1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/rootchain-developer-portal.git
-cd rootchain-developer-portal
+cd developer-portal
 ```
 
-2. Install dependencies:
+1. Install dependencies:
 ```bash
 npm install
 # or
 yarn install
 ```
 
-3. Set up environment variables:
+2. Set up environment variables:
 ```bash
 cp .env.example .env.local
 ```
@@ -140,4 +138,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-For support, please open an issue in the GitHub repository or contact the RootChain team.
+For support, please open an issue in the GitHub repository .

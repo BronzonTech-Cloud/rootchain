@@ -217,24 +217,6 @@ pytest tests/test_edge_cases.py
 # Run load tests
 locust -f tests/locustfile.py --host=http://localhost:8000
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-Charles Bronzon - bronzontech@pm.me
-Project Link: https://github.com/Bronzontech-Cloud/rootchain 
-
 ## Developer Portal
 
 The RootChain Developer Portal provides a comprehensive suite of tools and resources for developers:
@@ -258,3 +240,20 @@ The RootChain Developer Portal provides a comprehensive suite of tools and resou
 - npm or yarn
 
 For detailed information about the developer portal, see the [developer portal README](developer-portal/README.md). 
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+Charles Bronzon - bronzontech@pm.me
+Project Link: https://github.com/Bronzontech-Cloud/rootchain 

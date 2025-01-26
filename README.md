@@ -67,21 +67,23 @@ pip install -r requirements.txt
 ### Dependency Versions
 Key package versions used in this project:
 ```
-fastapi==0.68.1
-uvicorn==0.15.0
-python-dotenv==0.19.0
-stripe==2.60.0
-pydantic==1.8.2
-prometheus-client==0.11.0
-sentry-sdk[fastapi]==1.3.1
-pytest==6.2.5
-pytest-asyncio==0.15.1
-httpx==0.19.0
-python-multipart==0.0.5
-requests==2.26.0
+fastapi==0.104.1
+uvicorn==0.24.0
+python-dotenv==1.0.0
+stripe==7.6.0
+pydantic==2.5.2
+prometheus-client==0.19.0
+sentry-sdk[fastapi]==1.39.1
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+python-multipart==0.0.6
+requests==2.31.0
 python-jose[cryptography]==3.3.0
-redis==3.5.3
-locust==2.2.1
+redis==5.0.1
+locust==2.19.1
+mnemonic==0.20
+hdwallet==2.2.1 
 ```
 
 ### Troubleshooting Installation

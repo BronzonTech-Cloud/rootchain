@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Details - RootChain Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center space-x-8">
+                <a href="/" class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    RootChain Explorer
+                </a>
+                <div id="network-badge" class="network-badge mainnet">
+                    <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                    <span id="network-name">Mainnet</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">Transaction Details</h1>
+            <div id="tx-status" class="status-indicator success">Success</div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Transaction Overview -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Overview</h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-500">Transaction Hash</div>
+                        <div id="tx-hash" class="font-mono break-all"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-gray-500">From</div>
+                            <a id="tx-from" href="#" class="text-blue-600 hover:text-blue-800 font-mono break-all"></a>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">To</div>
+                            <a id="tx-to" href="#" class="text-blue-600 hover:text-blue-800 font-mono break-all"></a>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Amount</div>
+                            <div id="tx-amount" class="font-semibold"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Fee</div>
+                            <div id="tx-fee" class="font-semibold"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Details -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Details</h2>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Block</div>
+                            <a id="tx-block" href="#" class="text-blue-600 hover:text-blue-800"></a>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Timestamp</div>
+                            <div id="tx-timestamp"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Nonce</div>
+                            <div id="tx-nonce"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Size</div>
+                            <div id="tx-size"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">Data</div>
+                        <pre id="tx-data" class="bg-gray-50 p-4 rounded-lg overflow-x-auto font-mono text-sm"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/transaction.js"></script>
+</body>
+</html> 

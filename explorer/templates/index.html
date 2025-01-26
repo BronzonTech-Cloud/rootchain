@@ -5,201 +5,178 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RootChain Explorer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-8">RootChain Explorer</h1>
-
-        <!-- Network Selection -->
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4">Select Network</h2>
-            <div class="flex space-x-4">
-                <button onclick="setNetwork('mainnet')" id="mainnet-btn" class="px-4 py-2 bg-blue-500 text-white rounded">Mainnet</button>
-                <button onclick="setNetwork('testnet')" id="testnet-btn" class="px-4 py-2 bg-purple-500 text-white rounded">Testnet</button>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        RootChain Explorer
+                    </h1>
+                    <div class="network-selector flex space-x-4">
+                        <button id="mainnet-btn" class="network-badge mainnet">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                            Mainnet
+                        </button>
+                        <button id="testnet-btn" class="network-badge testnet opacity-50">
+                            <span class="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                            Testnet
+                        </button>
+                    </div>
+                </div>
+                <div class="search-bar">
+                    <form id="search-form" class="flex items-center">
+                        <input type="text" id="search-input" 
+                            class="w-96 px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Search by Address / Tx Hash / Block Hash">
+                        <button type="submit" 
+                            class="ml-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Search
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
+    </nav>
 
+    <main class="container mx-auto px-4 py-8">
         <!-- Network Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div id="mainnet-stats" class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Mainnet Statistics</h2>
-                <div class="space-y-2">
-                    <p><strong>Total Supply:</strong> <span id="mainnet-supply"></span> ROOT</p>
-                    <p><strong>Block Height:</strong> <span id="mainnet-blocks"></span></p>
-                    <p><strong>Mining Difficulty:</strong> <span id="mainnet-difficulty"></span></p>
-                    <p><strong>Block Time:</strong> <span id="mainnet-blocktime"></span> seconds</p>
-                    <p><strong>Mining Reward:</strong> <span id="mainnet-reward"></span> ROOT</p>
-                    <p><strong>Pending Transactions:</strong> <span id="mainnet-pending"></span></p>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card">
+                <h3 class="text-gray-500">Latest Block</h3>
+                <p id="latest-block" class="text-2xl font-semibold">-</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="text-gray-500">Total Transactions</h3>
+                <p id="total-txs" class="text-2xl font-semibold">-</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="text-gray-500">Average Block Time</h3>
+                <p id="avg-block-time" class="text-2xl font-semibold">-</p>
+            </div>
+            <div class="stat-card">
+                <h3 class="text-gray-500">Network TPS</h3>
+                <p id="network-tps" class="text-2xl font-semibold">-</p>
+            </div>
+        </div>
+
+        <!-- Additional Network Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Network Health -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Network Health</h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-500">Active Validators</div>
+                        <p id="active-validators" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">Network Difficulty</div>
+                        <p id="network-difficulty" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">Network Hash Rate</div>
+                        <p id="network-hashrate" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div class="h-48 mt-4">
+                        <canvas id="hashrate-chart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <div id="testnet-stats" class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Testnet Statistics</h2>
-                <div class="space-y-2">
-                    <p><strong>Total Supply:</strong> <span id="testnet-supply"></span> tROOT</p>
-                    <p><strong>Block Height:</strong> <span id="testnet-blocks"></span></p>
-                    <p><strong>Mining Difficulty:</strong> <span id="testnet-difficulty"></span></p>
-                    <p><strong>Block Time:</strong> <span id="testnet-blocktime"></span> seconds</p>
-                    <p><strong>Mining Reward:</strong> <span id="testnet-reward"></span> tROOT</p>
-                    <p><strong>Pending Transactions:</strong> <span id="testnet-pending"></span></p>
+            <!-- Token Metrics -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Token Metrics</h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-500">Total Supply</div>
+                        <p id="total-supply" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">Circulating Supply</div>
+                        <p id="circulating-supply" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">Total Staked</div>
+                        <p id="total-staked" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div class="h-48 mt-4">
+                        <canvas id="supply-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Metrics -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Transaction Metrics</h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-500">Pending Transactions</div>
+                        <p id="pending-txs" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">Average Fee</div>
+                        <p id="avg-fee" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-500">24h Volume</div>
+                        <p id="volume-24h" class="text-2xl font-semibold">-</p>
+                    </div>
+                    <div class="h-48 mt-4">
+                        <canvas id="tx-chart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Search -->
-        <div class="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 class="text-xl font-semibold mb-4">Search</h2>
-            <div class="flex space-x-4">
-                <input type="text" id="search-input" class="flex-1 p-2 border rounded" placeholder="Search by address, transaction hash, or block hash">
-                <button onclick="search()" class="px-4 py-2 bg-blue-500 text-white rounded">Search</button>
+        <!-- Network Performance -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Block Time Distribution -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Block Time Distribution</h2>
+                <div class="h-64">
+                    <canvas id="block-time-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Transaction Types -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Transaction Types</h2>
+                <div class="h-64">
+                    <canvas id="tx-types-chart"></canvas>
+                </div>
             </div>
         </div>
 
+        <!-- Latest Blocks & Transactions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Latest Blocks -->
-        <div class="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 class="text-xl font-semibold mb-4">Latest Blocks</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full">
-                    <thead>
-                        <tr class="bg-gray-50">
-                            <th class="px-6 py-3 text-left">Block Height</th>
-                            <th class="px-6 py-3 text-left">Hash</th>
-                            <th class="px-6 py-3 text-left">Timestamp</th>
-                            <th class="px-6 py-3 text-left">Transactions</th>
-                            <th class="px-6 py-3 text-left">Network</th>
-                        </tr>
-                    </thead>
-                    <tbody id="latest-blocks"></tbody>
-                </table>
-            </div>
+            <div class="explorer-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Latest Blocks</h2>
+                    <a href="/blocks" class="text-blue-600 hover:text-blue-800">View all →</a>
+                </div>
+                <div id="latest-blocks" class="space-y-4">
+                    <!-- Blocks will be inserted here -->
+                </div>
         </div>
 
         <!-- Latest Transactions -->
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-semibold mb-4">Latest Transactions</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full">
-                    <thead>
-                        <tr class="bg-gray-50">
-                            <th class="px-6 py-3 text-left">Hash</th>
-                            <th class="px-6 py-3 text-left">From</th>
-                            <th class="px-6 py-3 text-left">To</th>
-                            <th class="px-6 py-3 text-left">Amount</th>
-                            <th class="px-6 py-3 text-left">Network</th>
-                        </tr>
-                    </thead>
-                    <tbody id="latest-transactions"></tbody>
-                </table>
+            <div class="explorer-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Latest Transactions</h2>
+                    <a href="/transactions" class="text-blue-600 hover:text-blue-800">View all →</a>
+                </div>
+                <div id="latest-transactions" class="space-y-4">
+                    <!-- Transactions will be inserted here -->
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <script>
-        let currentNetwork = 'mainnet';
-
-        function setNetwork(network) {
-            currentNetwork = network;
-            document.getElementById('mainnet-btn').classList.toggle('bg-opacity-50', network !== 'mainnet');
-            document.getElementById('testnet-btn').classList.toggle('bg-opacity-50', network !== 'testnet');
-            refreshData();
-        }
-
-        async function refreshData() {
-            await Promise.all([
-                updateNetworkStats(),
-                updateLatestBlocks(),
-                updateLatestTransactions()
-            ]);
-        }
-
-        async function updateNetworkStats() {
-            const mainnetStats = await fetch('/api/stats?network=mainnet').then(r => r.json());
-            const testnetStats = await fetch('/api/stats?network=testnet').then(r => r.json());
-
-            // Update mainnet stats
-            document.getElementById('mainnet-supply').textContent = mainnetStats.total_supply.toLocaleString();
-            document.getElementById('mainnet-blocks').textContent = mainnetStats.blocks.toLocaleString();
-            document.getElementById('mainnet-difficulty').textContent = mainnetStats.difficulty;
-            document.getElementById('mainnet-blocktime').textContent = mainnetStats.block_time;
-            document.getElementById('mainnet-reward').textContent = mainnetStats.mining_reward;
-            document.getElementById('mainnet-pending').textContent = mainnetStats.pending_transactions;
-
-            // Update testnet stats
-            document.getElementById('testnet-supply').textContent = testnetStats.total_supply.toLocaleString();
-            document.getElementById('testnet-blocks').textContent = testnetStats.blocks.toLocaleString();
-            document.getElementById('testnet-difficulty').textContent = testnetStats.difficulty;
-            document.getElementById('testnet-blocktime').textContent = testnetStats.block_time;
-            document.getElementById('testnet-reward').textContent = testnetStats.mining_reward;
-            document.getElementById('testnet-pending').textContent = testnetStats.pending_transactions;
-        }
-
-        async function updateLatestBlocks() {
-            const blocks = await fetch(`/api/blocks/latest?network=${currentNetwork}`).then(r => r.json());
-            const tbody = document.getElementById('latest-blocks');
-            tbody.innerHTML = blocks.map(block => `
-                <tr class="border-t">
-                    <td class="px-6 py-4">${block.index}</td>
-                    <td class="px-6 py-4">${block.hash.substring(0, 16)}...</td>
-                    <td class="px-6 py-4">${new Date(block.timestamp * 1000).toLocaleString()}</td>
-                    <td class="px-6 py-4">${block.transactions.length}</td>
-                    <td class="px-6 py-4">${block.network}</td>
-                </tr>
-            `).join('');
-        }
-
-        async function updateLatestTransactions() {
-            const txs = await fetch(`/api/transactions/latest?network=${currentNetwork}`).then(r => r.json());
-            const tbody = document.getElementById('latest-transactions');
-            tbody.innerHTML = txs.map(tx => `
-                <tr class="border-t">
-                    <td class="px-6 py-4">${tx.hash.substring(0, 16)}...</td>
-                    <td class="px-6 py-4">${tx.from.substring(0, 16)}...</td>
-                    <td class="px-6 py-4">${tx.to.substring(0, 16)}...</td>
-                    <td class="px-6 py-4">${tx.amount} ${tx.network === 'mainnet' ? 'ROOT' : 'tROOT'}</td>
-                    <td class="px-6 py-4">${tx.network}</td>
-                </tr>
-            `).join('');
-        }
-
-        async function search() {
-            const query = document.getElementById('search-input').value.trim();
-            if (!query) return;
-
-            try {
-                // Determine network from prefix if it's an address
-                const network = query.startsWith('rtc') ? 'mainnet' : 
-                              query.startsWith('trtc') ? 'testnet' : 
-                              currentNetwork;
-
-                // Try different endpoints based on the query format
-                if (query.startsWith('rtc') || query.startsWith('trtc')) {
-                    window.location.href = `/address/${query}`;
-                } else if (query.length === 64) {  // Likely a transaction or block hash
-                    const [blockRes, txRes] = await Promise.all([
-                        fetch(`/api/block/${query}?network=${network}`),
-                        fetch(`/api/transaction/${query}?network=${network}`)
-                    ]);
-                    
-                    if (blockRes.ok) {
-                        window.location.href = `/block/${query}?network=${network}`;
-                    } else if (txRes.ok) {
-                        window.location.href = `/transaction/${query}?network=${network}`;
-                    } else {
-                        alert('No results found');
-                    }
-                } else {
-                    alert('Invalid search query');
-                }
-            } catch (error) {
-                alert('Error performing search: ' + error.message);
-            }
-        }
-
-        // Auto-refresh data every 30 seconds
-        setInterval(refreshData, 30000);
-
-        // Initial load
-        setNetwork('mainnet');
-    </script>
+    <script src="/static/explorer.js"></script>
 </body>
 </html> 

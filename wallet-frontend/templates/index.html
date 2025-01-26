@@ -6,164 +6,144 @@
     <title>RootChain Wallet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://js.stripe.com/v3/"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-8">RootChain Wallet</h1>
-        
-        <!-- Network Selection -->
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4">Select Network</h2>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-spinner fixed top-4 right-4 hidden"></div>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                RootChain Wallet
+            </h1>
+            
+            <!-- Network Selection -->
             <div class="flex space-x-4">
-                <button onclick="setNetwork('mainnet')" id="mainnet-btn" class="px-4 py-2 bg-blue-500 text-white rounded">Mainnet</button>
-                <button onclick="setNetwork('testnet')" id="testnet-btn" class="px-4 py-2 bg-purple-500 text-white rounded">Testnet</button>
+                <button id="mainnet-btn" class="network-badge mainnet">
+                    <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                    Mainnet
+                </button>
+                <button id="testnet-btn" class="network-badge testnet opacity-50">
+                    <span class="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                    Testnet
+                </button>
             </div>
-        </div>
+        </header>
 
-        <!-- Create/Recover Wallet -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Create New Wallet</h2>
-                <button onclick="createWallet()" class="w-full px-4 py-2 bg-green-500 text-white rounded">Create Wallet</button>
+        <!-- Create/Recover Wallet Section -->
+        <div id="no-wallet" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="wallet-card bg-white p-8 rounded-xl">
+                <h2 class="text-2xl font-semibold mb-6">Create New Wallet</h2>
+                <p class="text-gray-600 mb-6">Generate a new wallet with a secure recovery phrase and private key.</p>
+                <button id="create-wallet" class="btn w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700">
+                    Create Wallet
+                </button>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-xl font-semibold mb-4">Recover Wallet</h2>
-                <textarea id="mnemonic" class="w-full p-2 border rounded mb-4" placeholder="Enter your 24-word mnemonic phrase"></textarea>
-                <button onclick="recoverWallet()" class="w-full px-4 py-2 bg-yellow-500 text-white rounded">Recover Wallet</button>
-            </div>
-        </div>
-
-        <!-- Wallet Info -->
-        <div id="wallet-info" class="hidden bg-white p-6 rounded-lg shadow mb-8">
-            <h2 class="text-xl font-semibold mb-4">Wallet Information</h2>
-            <div class="space-y-2">
-                <p><strong>Network:</strong> <span id="wallet-network"></span></p>
-                <p><strong>Address:</strong> <span id="wallet-address"></span></p>
-                <p><strong>Balance:</strong> <span id="wallet-balance"></span></p>
-                <p><strong>Private Key:</strong> <span id="wallet-private-key" class="break-all"></span></p>
-                <p><strong>Mnemonic:</strong> <span id="wallet-mnemonic" class="break-all"></span></p>
-            </div>
-        </div>
-
-        <!-- Send Tokens -->
-        <div id="send-tokens" class="hidden bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-semibold mb-4">Send Tokens</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block mb-2">Recipient Address</label>
-                    <input type="text" id="recipient-address" class="w-full p-2 border rounded" placeholder="Enter recipient address">
+            <div class="wallet-card bg-white p-8 rounded-xl">
+                <h2 class="text-2xl font-semibold mb-6">Recover Wallet</h2>
+                <div class="input-group">
+                    <textarea id="mnemonic" class="w-full p-4 border rounded-lg" rows="3" placeholder="Enter your 24-word recovery phrase"></textarea>
                 </div>
-                <div>
-                    <label class="block mb-2">Amount</label>
-                    <input type="number" id="send-amount" class="w-full p-2 border rounded" placeholder="Amount to send">
+                <button id="recover-wallet" class="btn w-full px-6 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg font-medium hover:from-yellow-600 hover:to-yellow-700">
+                    Recover Wallet
+                </button>
+            </div>
+        </div>
+
+        <!-- Wallet Information -->
+        <div id="wallet-info" class="hidden space-y-8">
+            <!-- Balance Card -->
+            <div class="balance-display">
+                <p class="text-lg opacity-90">Total Balance</p>
+                <div class="balance-amount">
+                    <span id="wallet-balance">0.00</span>
+                    <span id="token-symbol">ROOT</span>
                 </div>
-                <button onclick="sendTokens()" class="w-full px-4 py-2 bg-blue-500 text-white rounded">Send Tokens</button>
+            </div>
+
+            <!-- Wallet Details -->
+            <div class="wallet-card bg-white p-8 rounded-xl">
+                <h2 class="text-2xl font-semibold mb-6">Wallet Details</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Wallet Address</label>
+                        <div id="wallet-address" class="address-text"></div>
+                    </div>
+                    
+                    <div id="private-key-section" class="private-key-section">
+                        <div class="warning-text mb-4">⚠️ Keep these secure - never share with anyone!</div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Private Key</label>
+                                <div id="private-key" class="address-text break-all"></div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Recovery Phrase</label>
+                                <div id="wallet-mnemonic" class="address-text break-all"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Send Tokens -->
+            <div class="wallet-card bg-white p-8 rounded-xl">
+                <h2 class="text-2xl font-semibold mb-6">Send Tokens</h2>
+                <form id="send-form" class="space-y-6">
+                    <div class="input-group">
+                        <label for="to-address" class="block text-sm font-medium text-gray-700 mb-2">Recipient Address</label>
+                        <input type="text" id="to-address" class="w-full" placeholder="Enter recipient address">
+                    </div>
+                    <div class="input-group">
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                        <input type="number" id="amount" class="w-full" placeholder="0.00" step="0.000001">
+                    </div>
+                    <button type="submit" class="btn w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700">
+                        Send Tokens
+                    </button>
+                </form>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="wallet-card bg-white p-8 rounded-xl">
+                <h2 class="text-2xl font-semibold mb-6">Transaction History</h2>
+                <div id="transaction-list" class="space-y-4">
+                    <!-- Transactions will be inserted here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- ICO Purchase -->
+            <div class="wallet-card bg-white p-8 rounded-xl">
+                <h2 class="text-2xl font-semibold mb-6">Purchase ROOT Tokens</h2>
+                <div class="mb-6">
+                    <p class="text-gray-600">Current Rate: 1 ROOT = $90 USD</p>
+                    <p class="text-gray-600">Minimum Purchase: $90 USD</p>
+                </div>
+                <form id="ico-form" class="space-y-6">
+                    <div class="input-group">
+                        <label for="purchase-amount" class="block text-sm font-medium text-gray-700 mb-2">Amount (USD)</label>
+                        <input type="number" id="purchase-amount" class="w-full" placeholder="90.00" min="90" step="0.01">
+                        <p class="text-sm text-gray-500 mt-1">You will receive: <span id="token-amount">1.00</span> ROOT</p>
+                    </div>
+                    <div class="input-group">
+                        <label for="recipient-address" class="block text-sm font-medium text-gray-700 mb-2">Recipient Wallet Address</label>
+                        <input type="text" id="recipient-address" class="w-full" placeholder="Enter wallet address" value="">
+                        <p class="text-sm text-gray-500 mt-1">Tokens will be sent to this address</p>
+                    </div>
+                    <button type="submit" class="btn w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-medium hover:from-green-700 hover:to-green-800">
+                        Purchase Tokens
+                    </button>
+                </form>
+                <div id="payment-element" class="mt-6 hidden">
+                    <!-- Stripe payment element will be inserted here -->
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        let currentNetwork = 'mainnet';
-        let currentWallet = null;
-
-        function setNetwork(network) {
-            currentNetwork = network;
-            document.getElementById('mainnet-btn').classList.toggle('bg-opacity-50', network !== 'mainnet');
-            document.getElementById('testnet-btn').classList.toggle('bg-opacity-50', network !== 'testnet');
-        }
-
-        async function createWallet() {
-            try {
-                const response = await fetch('/api/wallet/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ network: currentNetwork })
-                });
-                const wallet = await response.json();
-                displayWallet(wallet);
-            } catch (error) {
-                alert('Error creating wallet: ' + error.message);
-            }
-        }
-
-        async function recoverWallet() {
-            const mnemonic = document.getElementById('mnemonic').value.trim();
-            if (!mnemonic) {
-                alert('Please enter your mnemonic phrase');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/wallet/recover', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        mnemonic: mnemonic,
-                        network: currentNetwork
-                    })
-                });
-                const wallet = await response.json();
-                displayWallet(wallet);
-            } catch (error) {
-                alert('Error recovering wallet: ' + error.message);
-            }
-        }
-
-        function displayWallet(wallet) {
-            currentWallet = wallet;
-            document.getElementById('wallet-info').classList.remove('hidden');
-            document.getElementById('send-tokens').classList.remove('hidden');
-            document.getElementById('wallet-network').textContent = wallet.network;
-            document.getElementById('wallet-address').textContent = wallet.address;
-            document.getElementById('wallet-balance').textContent = `${wallet.balance} ${wallet.network === 'mainnet' ? 'ROOT' : 'tROOT'}`;
-            document.getElementById('wallet-private-key').textContent = wallet.private_key;
-            document.getElementById('wallet-mnemonic').textContent = wallet.mnemonic;
-        }
-
-        async function sendTokens() {
-            if (!currentWallet) {
-                alert('Please create or recover a wallet first');
-                return;
-            }
-
-            const recipientAddress = document.getElementById('recipient-address').value.trim();
-            const amount = parseFloat(document.getElementById('send-amount').value);
-
-            if (!recipientAddress || isNaN(amount) || amount <= 0) {
-                alert('Please enter valid recipient address and amount');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/transfer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        from_address: currentWallet.address,
-                        to_address: recipientAddress,
-                        amount: amount,
-                        private_key: currentWallet.private_key
-                    })
-                });
-                
-                if (response.ok) {
-                    alert('Transaction sent successfully!');
-                    // Refresh wallet info
-                    const walletResponse = await fetch(`/api/wallet/${currentWallet.address}`);
-                    const updatedWallet = await walletResponse.json();
-                    displayWallet(updatedWallet);
-                } else {
-                    const error = await response.json();
-                    throw new Error(error.detail);
-                }
-            } catch (error) {
-                alert('Error sending tokens: ' + error.message);
-            }
-        }
-
-        // Initialize with mainnet
-        setNetwork('mainnet');
-    </script>
+    <script src="/static/wallet.js"></script>
 </body>
 </html> 

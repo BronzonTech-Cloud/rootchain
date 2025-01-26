@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address Details - RootChain Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center space-x-8">
+                <a href="/" class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    RootChain Explorer
+                </a>
+                <div id="network-badge" class="network-badge mainnet">
+                    <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                    <span id="network-name">Mainnet</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">Address Details</h1>
+            <div class="font-mono text-gray-600 break-all" id="address"></div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Address Overview -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Balance</div>
+                            <div id="balance" class="text-2xl font-semibold"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Total Sent</div>
+                            <div id="total-sent" class="text-2xl font-semibold"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Total Received</div>
+                            <div id="total-received" class="text-2xl font-semibold"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Transaction Count</div>
+                            <div id="tx-count" class="text-2xl font-semibold"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">First Activity</div>
+                            <div id="first-activity" class="text-2xl font-semibold"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Last Activity</div>
+                            <div id="last-activity" class="text-2xl font-semibold"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Staked Amount</div>
+                            <div id="staked-amount" class="text-2xl font-semibold"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Validator Status</div>
+                            <div id="validator-status" class="text-2xl font-semibold"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Delegation Count</div>
+                            <div id="delegation-count" class="text-2xl font-semibold"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance History Chart -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Balance History</h2>
+                <div class="h-64">
+                    <canvas id="balance-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Transaction Activity Chart -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Transaction Activity</h2>
+                <div class="h-64">
+                    <canvas id="activity-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="explorer-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Transaction History</h2>
+                    <div class="flex space-x-2">
+                        <select id="tx-type-filter" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Types</option>
+                            <option value="transfer">Transfers</option>
+                            <option value="stake">Staking</option>
+                            <option value="delegate">Delegation</option>
+                            <option value="contract">Contract</option>
+                            <option value="reward">Rewards</option>
+                        </select>
+                        <select id="tx-direction-filter" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Directions</option>
+                            <option value="in">Incoming</option>
+                            <option value="out">Outgoing</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="transactions" class="space-y-4">
+                    <!-- Transactions will be inserted here -->
+                </div>
+                <div class="mt-4 flex justify-center">
+                    <button id="load-more" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Load More
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/address.js"></script>
+</body>
+</html> 

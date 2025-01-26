@@ -1,0 +1,12 @@
+2025-01-26 00:36:26,660 - app - ERROR - Error creating wallet: RootWallet.__init__() got an unexpected keyword argument 'network_type'
+2025-01-26 00:39:12,916 - app - ERROR - Error creating wallet: RootWallet.__init__() got an unexpected keyword argument 'network_type'
+2025-01-26 00:46:19,275 - app - INFO - Created new wallet on testnet
+2025-01-26 00:46:19,277 - app - ERROR - Error creating wallet: 'RootWallet' object has no attribute 'address'
+2025-01-26 00:48:47,571 - app - INFO - Created new wallet on testnet
+2025-01-26 00:52:48,703 - app - INFO - Created new wallet on testnet
+2025-01-26 00:53:48,507 - app - ERROR - Error recovering wallet: type object 'RootWallet' has no attribute 'from_mnemonic'
+2025-01-26 01:08:11,158 - app - INFO - Created new wallet on testnet
+2025-01-26 01:08:29,094 - stripe - INFO - message='Request to Stripe api' method=post path=https://api.stripe.com/v1/payment_intents
+2025-01-26 01:08:31,159 - stripe - INFO - message='Stripe API response' path=https://api.stripe.com/v1/payment_intents response_code=401
+2025-01-26 01:08:31,160 - stripe - INFO - error_code=None error_message='Invalid API Key provided: sk_test_***mple' error_param=None error_type=invalid_request_error message='Stripe API error received'
+2025-01-26 01:08:31,161 - app - ERROR - Error creating payment intent: Invalid API Key provided: sk_test_***mple

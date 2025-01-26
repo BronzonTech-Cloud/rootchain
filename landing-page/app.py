@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.requests import Request
 from pydantic import BaseModel
 import stripe
@@ -156,6 +156,10 @@ async def stripe_webhook(request: Request):
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/wallet")
+async def wallet_redirect():
+    return RedirectResponse(url="http://localhost:8000")
 
 if __name__ == "__main__":
     import uvicorn

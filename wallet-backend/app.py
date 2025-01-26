@@ -1,12 +1,14 @@
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel, validator, constr, condecimal
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, validator, constr, condecimal, Field
 from decimal import Decimal
 import stripe
 import os
 from dotenv import load_dotenv
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import sys
 import time
 from datetime import datetime, timedelta
@@ -20,6 +22,7 @@ from blockchain.wallet.wallet import RootWallet
 from blockchain.core.blockchain import RootChain
 from blockchain.wallet.symbols import ROOT, ROOT_TESTNET
 from cache_utils import TTLCache
+from fastapi.responses import RedirectResponse, JSONResponse
 
 # Configure logging
 logging.basicConfig(
@@ -65,9 +68,8 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-API_KEY = os.getenv("API_KEY")
-
-api_key_header = APIKeyHeader(name="X-API-Key")
+API_KEY = os.getenv("API_KEY", "YJMiJqoKKSpVvzAilQ9AIB5z0UYge1YmQqqDEU1a_KM")  # Default development key
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 # Rate limiting
 request_counts: Dict[str, list] = {}
@@ -89,9 +91,14 @@ async def check_rate_limit(request: Request):
     request_counts[client_ip].append(now)
 
 # CORS middleware
+origins = [
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with actual frontend domain
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -101,14 +108,17 @@ app.add_middleware(
 mainnet = RootChain(network="mainnet")
 testnet = RootChain(network="testnet")
 
+# Templates
+templates = Jinja2Templates(directory="templates")
+
 class NetworkModel(BaseModel):
     network: str
 
     @validator('network')
     def validate_network(cls, v):
-        if v not in ['mainnet', 'testnet']:
+        if v.lower() not in ['mainnet', 'testnet']:
             raise ValueError("Network must be either 'mainnet' or 'testnet'")
-        return v
+        return v.lower()
 
 class WalletCreate(NetworkModel):
     pass
@@ -118,12 +128,28 @@ class WalletRecover(NetworkModel):
 
 class PaymentIntent(NetworkModel):
     amount: condecimal(gt=Decimal('0'))  # type: ignore # Must be positive
+    wallet_address: str = Field(..., min_length=30, max_length=50)
+
+    @validator('wallet_address')
+    def validate_wallet_address(cls, v, values):
+        network = values.get('network', 'mainnet')
+        expected_prefix = 'rtc_' if network == 'mainnet' else 'trtc'
+        if not v.startswith(expected_prefix):
+            raise ValueError(f"Invalid wallet address for {network} network")
+        return v
 
 class TransferRequest(BaseModel):
     from_address: constr(min_length=30, max_length=50)  # type: ignore # Validate address length
     to_address: constr(min_length=30, max_length=50) # type: ignore
     amount: condecimal(gt=Decimal('0'))  # type: ignore # Must be positive
     private_key: str
+    network: str
+
+    @validator('network')
+    def validate_network(cls, v):
+        if v.lower() not in ['mainnet', 'testnet']:
+            raise ValueError("Network must be either 'mainnet' or 'testnet'")
+        return v.lower()
 
     @validator('to_address')
     def validate_addresses(cls, v, values):
@@ -151,200 +177,176 @@ def get_cached_balance(chain: RootChain, address: str) -> Decimal:
 def get_cached_gas_price(chain: RootChain) -> Decimal:
     return chain.get_gas_price()
 
-@app.post("/api/wallet/create", 
-    response_model=Dict,
-    description="Create a new wallet for the specified network",
-    responses={
-        200: {
-            "description": "Successfully created wallet",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "address": "rtc_1234567890abcdef",
-                        "private_key": "0x...",
-                        "mnemonic": "word1 word2 ...",
-                        "balance": "0",
-                        "network": "mainnet",
-                        "symbol": "ROOT"
-                    }
-                }
-            }
-        },
-        403: {"description": "Invalid API key"},
-        429: {"description": "Rate limit exceeded"}
-    }
-)
+async def verify_api_key(api_key: str = Depends(api_key_header)):
+    if not api_key:
+        return None  # Allow requests without API key in development
+    if api_key != API_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid API key"
+        )
+    return api_key
+
+@app.post("/api/wallet/create")
 async def create_wallet(
-    wallet_data: WalletCreate,
-    request: Request,
-    api_key: str = Depends(api_key_header)
+    request: WalletCreate,
+    req: Request,
+    api_key: str = Depends(verify_api_key)
 ):
-    start_time = time.time()
+    await check_rate_limit(req)
     try:
-        if api_key != API_KEY:
-            logger.warning(f"Invalid API key attempt from {request.client.host}")
-            raise HTTPException(status_code=403, detail="Invalid API key")
+        wallet = RootWallet(network=request.network)
+        wallet_info = wallet.create_wallet()  # Get wallet info using create_wallet method
         
-        await check_rate_limit(request)
-        
-        logger.info(f"Creating wallet for network: {wallet_data.network}")
-        wallet = RootWallet(network=wallet_data.network)
-        wallet_info = wallet.create_wallet()
-        
-        chain = mainnet if wallet_data.network == "mainnet" else testnet
-        balance = get_cached_balance(chain, wallet_info["address"])
-        
-        response = {
-            **wallet_info,
-            "balance": balance,
-            "network": wallet_data.network,
-            "symbol": "ROOT" if wallet_data.network == "mainnet" else "tROOT"
+        logger.info(f"Created new wallet on {request.network}")
+        return {
+            "address": wallet_info["address"],
+            "private_key": wallet_info["private_key"],
+            "mnemonic": wallet_info["mnemonic"],
+            "network": request.network,
+            "symbol": ROOT_TESTNET if request.network == 'testnet' else ROOT,
+            "balance": 0.0
         }
-        
-        logger.info(f"Successfully created wallet: {wallet_info['address']}")
-        return response
     except Exception as e:
-        logger.error(f"Error creating wallet: {str(e)}", exc_info=True)
-        raise
-    finally:
-        REQUEST_COUNT.labels(
-            endpoint='/api/wallet/create',
-            method='POST',
-            status='success' if 'response' in locals() else 'error'
-        ).inc()
-        REQUEST_LATENCY.labels(
-            endpoint='/api/wallet/create'
-        ).observe(time.time() - start_time)
+        logger.error(f"Error creating wallet: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/wallet/recover")
-async def recover_wallet(wallet_data: WalletRecover):
+async def recover_wallet(
+    request: WalletRecover,
+    req: Request,
+    api_key: str = Depends(verify_api_key)
+):
+    await check_rate_limit(req)
     try:
-        # Recover wallet for specified network
-        wallet = RootWallet(network=wallet_data.network)
-        wallet_info = wallet.recover_wallet(wallet_data.mnemonic)
+        # Create wallet instance first
+        wallet = RootWallet(network=request.network)
+        # Then recover using the mnemonic
+        wallet_info = wallet.recover_wallet(request.mnemonic)
         
-        # Get balance from appropriate chain
-        chain = mainnet if wallet_data.network == "mainnet" else testnet
-        balance = chain.get_balance(wallet_info["address"])
+        chain = testnet if request.network == 'testnet' else mainnet
+        balance = get_cached_balance(chain, wallet_info["address"])
         
         return {
-            **wallet_info,
-            "balance": balance,
-            "network": wallet_data.network,
-            "symbol": "ROOT" if wallet_data.network == "mainnet" else "tROOT"
+            "address": wallet_info["address"],
+            "private_key": wallet_info["private_key"],
+            "mnemonic": request.mnemonic,
+            "network": request.network,
+            "symbol": ROOT_TESTNET if request.network == 'testnet' else ROOT,
+            "balance": float(balance)
         }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.error(f"Error recovering wallet: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/wallet/{address}")
-async def get_wallet_details(address: str):
+async def get_wallet_info(
+    address: str,
+    req: Request,
+    api_key: str = Depends(verify_api_key),
+    network: str = 'mainnet'
+):
+    await check_rate_limit(req)
     try:
-        # Determine network from address prefix
-        network = "mainnet" if address.startswith("rtc") else "testnet"
-        chain = mainnet if network == "mainnet" else testnet
+        chain = testnet if network == 'testnet' else mainnet
+        balance = get_cached_balance(chain, address)
+        transactions = chain.get_transactions(address)
         
-        if not RootWallet.verify_address(address):
-            raise HTTPException(status_code=400, detail="Invalid address")
-        
-        balance = chain.get_balance(address)
-        transactions = []
-        
-        # Get transaction history
-        for block in chain.chain:
-            for tx in block.transactions:
-                if tx["sender"] == address or tx["recipient"] == address:
-                    transactions.append({
-                        **tx,
-                        "block_number": block.index,
-                        "timestamp": block.timestamp
-                    })
+        formatted_transactions = []
+        for tx in transactions:
+            tx_type = 'receive' if tx['recipient'] == address else 'send'
+            formatted_transactions.append({
+                "type": tx_type,
+                "amount": float(tx['amount']),
+                "timestamp": tx['timestamp'],
+                "sender": tx['sender'],
+                "recipient": tx['recipient']
+            })
         
         return {
             "address": address,
-            "balance": balance,
-            "network": network,
-            "symbol": "ROOT" if network == "mainnet" else "tROOT",
-            "transactions": transactions[-50:]  # Return last 50 transactions
+            "balance": float(balance),
+            "symbol": ROOT_TESTNET if network == 'testnet' else ROOT,
+            "transactions": formatted_transactions
         }
     except Exception as e:
+        logger.error(f"Error getting wallet info: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/transfer")
 async def transfer_tokens(
-    transfer: TransferRequest,
-    request: Request,
-    api_key: str = Depends(api_key_header)
+    request: TransferRequest,
+    req: Request,
+    api_key: str = Depends(verify_api_key)
 ):
-    start_time = time.time()
+    await check_rate_limit(req)
     try:
-        if api_key != API_KEY:
-            logger.warning(f"Invalid API key attempt from {request.client.host}")
-            raise HTTPException(status_code=403, detail="Invalid API key")
-        
-        await check_rate_limit(request)
-        
-        network = "mainnet" if transfer.from_address.startswith("rtc") else "testnet"
-        chain = mainnet if network == "mainnet" else testnet
-        wallet = RootWallet(network=network)
-        
-        logger.info(f"Processing transfer from {transfer.from_address} to {transfer.to_address}")
-        
-        gas_price = get_cached_gas_price(chain)
-        gas_limit = 21000
-        fee = Decimal(str(gas_price * gas_limit))
-        
-        balance = get_cached_balance(chain, transfer.from_address)
-        if balance < transfer.amount + fee:
-            logger.warning(f"Insufficient balance for transfer: {transfer.from_address}")
-            raise HTTPException(status_code=400, detail="Insufficient balance including gas fee")
-        
-        tx = wallet.create_transaction(
-            transfer.from_address,
-            transfer.to_address,
-            transfer.amount,
-            transfer.private_key,
-            gas_price=gas_price,
-            gas_limit=gas_limit
+        chain = testnet if request.network == 'testnet' else mainnet
+        wallet = RootWallet.from_private_key(
+            request.private_key,
+            network_type=request.network
         )
         
-        chain.add_transaction(tx)
+        if wallet.address != request.from_address:
+            raise HTTPException(status_code=400, detail="Invalid wallet credentials")
         
-        logger.info(f"Transfer successful: {tx['hash']}")
+        balance = get_cached_balance(chain, wallet.address)
+        if float(balance) < float(request.amount):
+            raise HTTPException(status_code=400, detail="Insufficient balance")
+        
+        gas_price = get_cached_gas_price(chain)
+        gas_limit = Decimal('21000')  # Standard transfer gas limit
+        fee = gas_price * gas_limit
+        
+        if float(balance) < float(request.amount) + float(fee):
+            raise HTTPException(status_code=400, detail="Insufficient balance to cover transfer amount and gas fee")
+        
+        tx = {
+            "sender": wallet.address,
+            "recipient": request.to_address,
+            "amount": float(request.amount),
+            "timestamp": int(time.time()),
+            "gas_price": float(gas_price),
+            "gas_limit": float(gas_limit)
+        }
+        
+        chain.add_transaction(tx)
+        logger.info(f"Transfer successful: {request.amount} tokens from {wallet.address} to {request.to_address}")
+        
         return TransactionResponse(
             status="success",
             transaction=tx,
-            network=network,
-            gas_used=Decimal(str(gas_limit)),
+            network=request.network,
+            gas_used=gas_limit,
             fee=fee
         )
     except Exception as e:
-        logger.error(f"Error processing transfer: {str(e)}", exc_info=True)
-        raise
-    finally:
-        REQUEST_COUNT.labels(
-            endpoint='/api/transfer',
-            method='POST',
-            status='success' if 'tx' in locals() else 'error'
-        ).inc()
-        REQUEST_LATENCY.labels(
-            endpoint='/api/transfer'
-        ).observe(time.time() - start_time)
+        logger.error(f"Error in transfer: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/payment/create-intent")
 async def create_payment_intent(payment: PaymentIntent):
     try:
+        # Calculate token amount
+        token_amount = payment.amount / Decimal('90.0')  # $90 = 1 ROOT/tROOT
+        
         intent = stripe.PaymentIntent.create(
             amount=int(payment.amount * 100),  # Convert to cents
             currency="usd",
             metadata={
                 "product": "ROOT_TOKEN",
-                "network": payment.network
+                "network": payment.network,
+                "recipient_address": payment.wallet_address,
+                "token_amount": str(token_amount)
             }
         )
-        return {"clientSecret": intent.client_secret}
+        return {
+            "clientSecret": intent.client_secret,
+            "token_amount": float(token_amount),
+            "wallet_address": payment.wallet_address
+        }
     except Exception as e:
+        logger.error(f"Error creating payment intent: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/payment/webhook")
@@ -361,26 +363,51 @@ async def stripe_webhook(request: Request):
             payment_intent = event.data.object
             metadata = payment_intent.metadata
             network = metadata.get("network", "mainnet")
+            recipient_address = metadata.get("recipient_address")
+            token_amount = Decimal(metadata.get("token_amount", "0"))
+            
+            if not recipient_address:
+                logger.error("No recipient address provided in payment metadata")
+                raise ValueError("No recipient address provided")
             
             # Select appropriate chain and treasury address
             chain = mainnet if network == "mainnet" else testnet
             treasury = "rtc_treasury" if network == "mainnet" else "trtc_treasury"
             
-            # Process the successful payment
-            amount_tokens = payment_intent.amount / 9000  # $90 = 1 ROOT/tROOT
-            recipient_address = metadata.get("recipient_address")
+            # Create and send the transaction
+            tx = {
+                "sender": treasury,
+                "recipient": recipient_address,
+                "amount": float(token_amount),
+                "timestamp": int(time.time()),
+                "type": "ico_purchase"
+            }
             
-            if recipient_address:
-                chain.add_transaction({
-                    "sender": treasury,
-                    "recipient": recipient_address,
-                    "amount": amount_tokens,
-                    "timestamp": int(time.time())
-                })
-                
-        return {"status": "success"}
+            chain.add_transaction(tx)
+            logger.info(f"ICO purchase successful: {token_amount} tokens sent to {recipient_address}")
+            
+            return {
+                "status": "success",
+                "transaction": tx
+            }
     except Exception as e:
+        logger.error(f"Error processing webhook: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="http://localhost:3001")
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint to verify API is running"""
+    return JSONResponse(
+        content={
+            "status": "ok",
+            "timestamp": int(time.time()),
+            "version": "1.0.0"
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn

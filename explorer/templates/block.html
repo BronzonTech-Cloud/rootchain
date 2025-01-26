@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Details - RootChain Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center space-x-8">
+                <a href="/" class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    RootChain Explorer
+                </a>
+                <div id="network-badge" class="network-badge mainnet">
+                    <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                    <span id="network-name">Mainnet</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">Block Details</h1>
+            <div class="text-gray-600">Block #<span id="block-number">-</span></div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Block Overview -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Block Hash</div>
+                            <div id="block-hash" class="font-mono break-all"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Timestamp</div>
+                            <div id="block-timestamp"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Transactions</div>
+                            <div id="block-tx-count"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Previous Block</div>
+                            <a id="prev-block" href="#" class="text-blue-600 hover:text-blue-800 font-mono break-all"></a>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Block Size</div>
+                            <div id="block-size"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Block Reward</div>
+                            <div id="block-reward"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Block Transactions -->
+            <div class="explorer-card">
+                <h2 class="text-xl font-semibold mb-4">Transactions</h2>
+                <div id="block-transactions" class="space-y-4">
+                    <!-- Transactions will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/block.js"></script>
+</body>
+</html> 

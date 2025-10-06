@@ -31,6 +31,6 @@ locust==2.34.0
 # Additional dependencies
 h11==0.16.0
 httpcore==0.13.7
-asgiref==3.8.1
+asgiref==3.10.0
 charset-normalizer==2.0.12
 cffi==1.17.1 

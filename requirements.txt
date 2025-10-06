@@ -1,8 +1,8 @@
 # Core dependencies
 fastapi==0.68.1
 uvicorn==0.15.0
-pydantic==1.10.13
-starlette==0.48.0
+pydantic==1.8.2
+starlette==0.14.2
 
 # HTTP and API
 httpx==0.28.1

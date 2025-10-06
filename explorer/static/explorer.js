@@ -71,7 +71,7 @@ elements.searchForm?.addEventListener('submit', async (e) => {
             try {
                 const blockResponse = await fetchWithTimeout(`/api/block/${query}?network=${state.network}`);
                 if (blockResponse.ok) {
-                    window.location.href = `/block/${query}`;
+                    window.location.href = `/block/${encodeURIComponent(query)}`;
                     return;
                 }
             } catch (error) {
@@ -90,11 +90,11 @@ elements.searchForm?.addEventListener('submit', async (e) => {
         
         // Redirect based on result type
         if ('balance' in data) {
-            window.location.href = `/address/${query}`;
+            window.location.href = `/address/${encodeURIComponent(query)}`;
         } else if ('transactions' in data) {
-            window.location.href = `/block/${query}`;
+            window.location.href = `/block/${encodeURIComponent(query)}`;
         } else {
-            window.location.href = `/transaction/${query}`;
+            window.location.href = `/transaction/${encodeURIComponent(query)}`;
         }
     } catch (error) {
         console.error('Search error:', error);

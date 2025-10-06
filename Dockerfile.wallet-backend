@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY ./wallet-backend /app/wallet-backend
+COPY requirements.txt /app/requirements.txt
+
+RUN python -m pip install --upgrade pip \
+    && pip install -r requirements.txt
+
+WORKDIR /app/wallet-backend
+CMD ["python", "app.py"]

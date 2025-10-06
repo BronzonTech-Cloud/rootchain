@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY ./blockchain /app/blockchain
+COPY requirements.txt /app/requirements.txt
+
+RUN python -m pip install --upgrade pip \
+    && pip install -r requirements.txt
+
+CMD ["python", "-m", "blockchain.core.blockchain"]

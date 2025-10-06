@@ -158,6 +158,30 @@ npm run dev
 
 The services will be available at:
 - Wallet: http://localhost:8000
+
+## Developer tooling
+
+Set up pre-commit hooks (recommended):
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
+
+Reproducible installs:
+
+```bash
+pip install -r requirements.lock
+```
+
+### Docker (development)
+
+You can use Docker Compose to run core services locally:
+
+```bash
+docker-compose up --build
+```
 - Explorer: http://localhost:8001
 - Landing Page & ICO: http://localhost:8002
 - Developer Portal: http://localhost:3000

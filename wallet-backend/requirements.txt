@@ -14,4 +14,4 @@ python-jose[cryptography]==3.3.0
 redis==5.0.1
 locust==2.34.0
 mnemonic==0.20
-hdwallet==2.2.1 
+hdwallet==3.6.1 

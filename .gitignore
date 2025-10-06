@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+.env
+*.sqlite3
+*.db
+*.log
+
+# Node.js
+node_modules/
+.next/
+dist/
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Misc
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Test/coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Build
+build/
+
+# Logs
+*.log
+
+# Ignore local settings
+settings.json
+
+# Ignore static build artifacts
+/static/
+
+# Ignore compiled contracts
+*.sol.json
+
+# Ignore Jupyter Notebooks checkpoints
+.ipynb_checkpoints/

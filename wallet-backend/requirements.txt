@@ -12,6 +12,6 @@ python-multipart==0.0.6
 requests==2.32.4
 python-jose[cryptography]==3.3.0
 redis==5.0.1
-locust==2.19.1
+locust==2.34.0
 mnemonic==0.20
 hdwallet==2.2.1 

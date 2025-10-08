@@ -1,0 +1,105 @@
+name: Feature Request
+about: Suggest a new feature for the MVP
+title: '[FEATURE] '
+labels: ['enhancement', 'mvp']
+assignees: ''
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Feature Request
+        
+        Use this template to suggest a new feature for the RootChain MVP.
+
+  - type: input
+    id: phase
+    attributes:
+      label: Phase
+      description: Which phase should this feature be implemented in?
+      placeholder: 'Phase 1, Phase 2, Phase 3, or Post-MVP'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature?
+      options:
+        - P0 (Critical for MVP)
+        - P1 (High priority)
+        - P2 (Medium priority)
+        - P3 (Low priority)
+        - P4 (Nice to have)
+    validations:
+      required: true
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Feature Description
+      description: A clear and concise description of the feature
+      placeholder: 'Describe the feature you would like to see...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: 'Describe the problem this feature would solve...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: How would you like this feature to work?
+      placeholder: 'Describe your proposed solution...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: Write this as a user story
+      placeholder: 'As a [user type], I want [functionality] so that [benefit]'
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What are the specific criteria for this feature to be considered complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-considerations
+    attributes:
+      label: Technical Considerations
+      description: Any technical considerations or constraints?
+      placeholder: 'List any technical considerations...'
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What alternatives have you considered?
+      placeholder: 'Describe any alternative solutions you have considered...'
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context or screenshots about the feature request
+      placeholder: 'Add any other context or screenshots about the feature request here...'

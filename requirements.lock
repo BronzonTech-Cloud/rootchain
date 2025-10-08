@@ -20,3 +20,5 @@ httpcore==0.13.7
 asgiref==3.8.1
 charset-normalizer==2.0.12
 cffi==1.17.1
+pip-audit==2.6.0
+safety==3.6.2

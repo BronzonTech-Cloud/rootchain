@@ -80,7 +80,11 @@ export async function PATCH(request: Request) {
   try {
     const { id, status } = await request.json()
     
-    if (!id || !apiKeys[id]) {
+    if (
+      !id ||
+      ["__proto__", "prototype", "constructor"].includes(id) ||
+      !apiKeys[id]
+    ) {
       return NextResponse.json(
         { error: 'Invalid API key ID' },
         { status: 400 }

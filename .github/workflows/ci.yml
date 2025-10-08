@@ -12,13 +12,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v3
         with:
           python-version: '3.12'
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.lock','**/requirements.txt') }}
@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.lock ]; then pip install -r requirements.lock; \
           elif [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install flake8 pytest pytest-cov mypy bandit
+          pip install flake8 pytest pytest-cov mypy bandit pip-audit safety
 
       - name: Lint (flake8)
         run: flake8 || true
@@ -40,6 +40,14 @@ jobs:
 
       - name: Security scan (bandit)
         run: bandit -r . || true
+
+      - name: Dependency audit (pip-audit)
+        run: |
+          pip-audit --progress spinner || true
+
+      - name: Dependency vulnerability check (safety)
+        run: |
+          safety check || true
 
       - name: Run tests with coverage
         run: |

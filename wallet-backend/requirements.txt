@@ -11,6 +11,8 @@ httpx==0.28.1
 python-multipart==0.0.20
 requests==2.32.5
 python-jose[cryptography]==3.3.0
+redis==6.4.0
+locust==2.34.0
 redis==5.0.1
 locust==2.41.6
 mnemonic==0.20

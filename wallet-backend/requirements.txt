@@ -11,7 +11,7 @@ httpx==0.28.1
 python-multipart==0.0.20
 requests==2.32.4
 python-jose[cryptography]==3.3.0
-redis==5.0.1
+redis==6.4.0
 locust==2.34.0
 mnemonic==0.20
 hdwallet==3.6.1 

@@ -15,5 +15,5 @@ redis==6.4.0
 locust==2.34.0
 redis==5.0.1
 locust==2.41.6
-mnemonic==0.20
+mnemonic==0.21
 hdwallet==3.6.1 

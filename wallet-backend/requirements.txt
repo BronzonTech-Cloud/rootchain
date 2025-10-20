@@ -1,4 +1,4 @@
-fastapi==0.104.1
+fastapi==0.119.0
 uvicorn==0.38.0
 python-dotenv==1.1.1
 stripe==7.6.0

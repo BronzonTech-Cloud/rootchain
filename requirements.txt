@@ -34,5 +34,5 @@ locust==2.41.6
 h11==0.16.0
 httpcore==1.0.9
 asgiref==3.10.0
-charset-normalizer==2.0.12
+charset-normalizer==3.4.4
 cffi==1.17.1 

@@ -13,7 +13,7 @@ requests==2.32.5
 python-jose[cryptography]==3.3.0
 redis==6.4.0
 locust==2.34.0
-redis==5.0.1
+redis==7.0.0
 locust==2.41.6
 mnemonic==0.21
 hdwallet==3.6.1 

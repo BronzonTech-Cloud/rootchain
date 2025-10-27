@@ -2,7 +2,7 @@
 # Allow pip to select a FastAPI release that depends on a patched Starlette.
 fastapi>=0.68.1,<0.120
 uvicorn==0.38.0
-pydantic==1.8.2
+pydantic==2.12.3
 # Require a patched Starlette to avoid known CVEs in 0.14.2
 starlette>=0.14.3
 
